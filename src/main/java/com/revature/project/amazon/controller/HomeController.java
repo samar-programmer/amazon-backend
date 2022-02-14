@@ -1,5 +1,6 @@
 package com.revature.project.amazon.controller;
 
+import java.io.ByteArrayInputStream;
 import java.util.Optional;
 import java.util.Random;
 
@@ -8,7 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +27,7 @@ import com.revature.project.amazon.exception.UserCustomException;
 import com.revature.project.amazon.model.User;
 import com.revature.project.amazon.response.ServerResponse;
 import com.revature.project.amazon.service.HomeService;
+import com.revature.project.amazon.utility.PDFGenerator;
 import com.revature.project.amazon.utility.Validator;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -32,6 +37,9 @@ public class HomeController {
 
 	@Autowired
 	private HomeService homeService;
+	
+	@Autowired
+	PDFGenerator pdfgenerator;
 
 	@PostMapping("/signup")
 	public ResponseEntity<ServerResponse> addUser(@RequestBody User user) {
@@ -194,5 +202,22 @@ public class HomeController {
 		return new ResponseEntity<ServerResponse>(serverResponse, HttpStatus.ACCEPTED);
 	}
 	 
+	@GetMapping("/generatePdf")
+	public ResponseEntity<InputStreamResource> getReportUser(@RequestParam("email") String email) {
+
+		ServerResponse serverResponse = new ServerResponse();
+
+		ByteArrayInputStream bis = pdfgenerator.generatePdfReport(email);
+		serverResponse.setMessage("success");
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Disposition", "inline; filename=cart.pdf");
+
+		return ResponseEntity.ok().headers	(headers).contentType(MediaType.APPLICATION_PDF)
+				.body(new InputStreamResource(bis));
+
+	}
+
+	
 
 }
